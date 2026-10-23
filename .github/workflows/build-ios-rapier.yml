@@ -34,8 +34,8 @@ jobs:
           test -n "$LIB" || { echo "iOS library not found"; find sable_rapier/src/main/rust -name 'libsable_rapier*'; exit 1; }
 
           file "$LIB"
-otool -l "$LIB" || true
-mkdir -p artifacts
+          otool -l "$LIB" || true
+          mkdir -p artifacts
           cp "$LIB" artifacts/sable_rapier_aarch64_ios.dylib
 
       - name: Upload iOS native library
@@ -44,3 +44,4 @@ mkdir -p artifacts
           name: sable-rapier-ios-arm64
           path: artifacts/sable_rapier_aarch64_ios.dylib
           if-no-files-found: error
+

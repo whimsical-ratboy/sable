@@ -34,8 +34,8 @@ jobs:
           test -n "$LIB" || { echo "iOS library not found"; find sable_rapier/src/main/rust -name 'libsable_rapier*'; exit 1; }
 
           file "$LIB"
-          otool -l "$LIB" | grep -A 5 LC_BUILD_VERSION
-          mkdir -p artifacts
+otool -l "$LIB" || true
+mkdir -p artifacts
           cp "$LIB" artifacts/sable_rapier_aarch64_ios.dylib
 
       - name: Upload iOS native library

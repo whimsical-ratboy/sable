@@ -1,0 +1,46 @@
+name: Build Sable Rapier for iOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain and iOS target
+        run: |
+          rustup toolchain install nightly-2026-01-29 --profile minimal
+          rustup target add aarch64-apple-ios --toolchain nightly-2026-01-29
+
+      - name: Verify iOS SDK
+        run: xcrun --sdk iphoneos --show-sdk-path
+
+      - name: Compile Rapier for iOS ARM64
+        shell: bash
+        run: |
+          cargo +nightly-2026-01-29 build \
+            --manifest-path sable_rapier/src/main/rust/rapier/Cargo.toml \
+            --target aarch64-apple-ios \
+            --release
+
+          LIB="$(find sable_rapier/src/main/rust -path '*/aarch64-apple-ios/release/libsable_rapier.dylib' -print -quit)"
+          test -n "$LIB" || { echo "iOS library not found"; find sable_rapier/src/main/rust -name 'libsable_rapier*'; exit 1; }
+
+          file "$LIB"
+          otool -l "$LIB" | grep -A 5 LC_BUILD_VERSION
+          mkdir -p artifacts
+          cp "$LIB" artifacts/sable_rapier_aarch64_ios.dylib
+
+      - name: Upload iOS native library
+        uses: actions/upload-artifact@v4
+        with:
+          name: sable-rapier-ios-arm64
+          path: artifacts/sable_rapier_aarch64_ios.dylib
+          if-no-files-found: error

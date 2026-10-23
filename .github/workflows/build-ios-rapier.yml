@@ -1,3 +1,4 @@
+
 name: Build Sable Rapier for iOS
 
 on:
@@ -31,10 +32,23 @@ jobs:
             --release
 
           LIB="$(find sable_rapier/src/main/rust -path '*/aarch64-apple-ios/release/libsable_rapier.dylib' -print -quit)"
-          test -n "$LIB" || { echo "iOS library not found"; find sable_rapier/src/main/rust -name 'libsable_rapier*'; exit 1; }
+          test -n "$LIB" || {
+            echo "iOS library not found"
+            find sable_rapier/src/main/rust -name 'libsable_rapier*'
+            exit 1
+          }
 
           file "$LIB"
-          otool -l "$LIB" || true
+
+      - name: Sign iOS native library
+        shell: bash
+        run: |
+          LIB="sable_rapier/src/main/rust/target/aarch64-apple-ios/release/libsable_rapier.dylib"
+
+          codesign --force --sign - --timestamp=none "$LIB"
+          codesign --verify --strict --verbose=2 "$LIB"
+          codesign --display --verbose=2 "$LIB" 2>&1 || true
+
           mkdir -p artifacts
           cp "$LIB" artifacts/sable_rapier_aarch64_ios.dylib
 
